@@ -1,0 +1,22 @@
+{
+  "name": "diplomacybot",
+  "version": "1.0.0",
+  "description": "discord bot to play diplomacy",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "echo no build script",
+    "html": "tsc ./maps/standard/standard.ts && browserify html.js -o bundle.js",
+    "tsc": "tsc engine.ts && tsc ./maps/standard/standard.ts"
+  },
+  "author": "shad",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^14.14.28"
+  },
+  "dependencies": {
+    "canvas": "^2.6.1",
+    "discord.js": "^12.5.1",
+    "dotenv": "^8.2.0"
+  }
+}

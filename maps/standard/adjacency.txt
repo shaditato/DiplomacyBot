@@ -1,0 +1,36 @@
+TURKEY
+    PR
+        ank inland - con inland, smy inland, arm inland
+        ank coast - bla, con coast, arm coast
+        con inland - ank inland, smy inland, bul inland
+        con coast - bul sc, bul ec, smy coast, ank coast, bla, aeg
+        smy inland - ank inland, con inland, arm inland, syr inland
+        smy coast - con coast, syr coast, aeg, eas
+    NON
+        syr inland - smy inland, arm inland
+        syr coast - smy coast, eas
+        arm inland - ank inland, smy inland, sev inland
+        arm coast - ank coast, sev coast, bla
+
+RUSSIA
+    PR
+        sev inland - arm inland, rum inland, ukr, mos inland
+        sev coast - arm coast, rum coast, bla
+        mos - lvn inland, war, ukr, stp inland
+        war - pru inland, lvn inland, sil, gal, ukr, mos
+        stp inland - nor inland, fin inland, lvn inland, mos
+        stpnc - nor coast, bar
+        stpsc - lvn coast, fin coast, bot
+    NON
+        ukr - sev inland, rum inland, war, gal, mos
+        lvn inland - pru inland, war, mos, stp inland
+        lvn coast - stpsc, pru coast, bot, bal
+        fin inland - swe inland, nor inland, stp inland
+        fin coast - stpsc, swe coast, bot
+
+SCANDINAVIA
+    PR
+        swe inland - nor inland, fin inland, den inland
+        swe coast - fin coast, nor coast, den coast bot, bal, ska
+        nor inland - swe inland, fin inland, stp inland
+        nor coast - swe coast, stpnc, ska, nth, nrg, bar
