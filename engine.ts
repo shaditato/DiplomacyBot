@@ -1,26 +1,71 @@
 const Canvas = require('canvas');
 
+export module Engine {
+
 // unit types
+//  requires: each is a unique number
+const army = 0;
+const fleet = 1;
+export const unitTypes = {
+    army: army,
+    fleet: fleet
+}
+// province types
+//  requires: each is a unique number
+const inland = 0;
+const water = 1;
+const coastal = 2;
+export const provinceTypes = {
+    inland: inland,
+    water: water,
+    coastal: coastal
+}
+// move types
 //  requires: each is unique
-let army = 0;
-let fleet = 1;
+const move = 0;
+const offSupport = 1;
+const hold = 2;
+const defSupport = 3;
+const unitConvoy = 4;
+const fleetConvoy = 5;
+export const orderTypes = {
+    move: move,
+    offSupport: offSupport,
+    hold: hold,
+    defSupport: defSupport,
+    unitConvoy: unitConvoy,
+    fleetConvoy: fleetConvoy
+}
+// turn phases
+//  requires: each is unique
+const orders = 0;
+const resolution = 1;
+const retreat = 2;
+const build = 3;
+export const turnPhases = {
+    order: orders,
+    resolution: resolution,
+    retreat: retreat,
+    build: build   
+}
 
-class Unit {
-    type: number;
-    imageDir: string;
-    displaced: boolean;
 
-    constructor (type: number, imageDir: string) {
-        this.type = type; // Any -> army, fleet
-        this.imageDir = imageDir;
-        this.displaced = false; // Bool -> displaced after losing battle
+
+export class Unit {
+    private _displaced: boolean = false;
+    constructor (
+        private _type: number,
+        private _imageDir: string
+    ) {}
+
+    get type() { 
+        return this._type; 
     }
-
-    getType() {
-        return this.type;
+    get imageDir() {
+        return this._imageDir;
     }
-    getImageDir() {
-        return this.imageDir;
+    get displaced() {
+        return this._displaced;
     }
     getCountry(countries: Country[]) {
         for (var i = 0; i < countries.length; i++) {
@@ -50,10 +95,9 @@ class Unit {
             }
         }
     }
-
 }
 
-class Position {
+export class Position {
     x: number;
     y: number;
 
@@ -63,13 +107,7 @@ class Position {
     }
 }
 
-// province types
-//  requires: each is unique
-let inland = 0;
-let water = 1;
-let coastal = 2;
-
-class SubProvince {
+export class SubProvince {
     name: string;
     occupiedBy: Unit;
     newUnit: Unit;
@@ -122,7 +160,7 @@ class SubProvince {
     }
 }
 
-class Province {
+export class Province {
     name: [string, string];
     type: number;
     pr: boolean;
@@ -228,8 +266,8 @@ class Province {
     isAttacked(orders: Order[], countries: Country[]) { // [listof Order] -> Bool
         for (var i = 0; i < orders.length; i++) {
             let order = orders[i];
-            if (this.getSubProvinces().includes(order.getDest()) && order.getType() == move // destination and attack
-                && (!this.isOccupied() || order.getCountry() != this.getUnit().getCountry(countries))) { // not same country
+            if (this.getSubProvinces().includes(order.dest) && order.type == move // destination and attack
+                && (!this.isOccupied() || order.country != this.getUnit().getCountry(countries))) { // not same country
                 return true;
             }
         }
@@ -238,7 +276,7 @@ class Province {
 
 }
 
-class Country {
+export class Country {
     name: string;
     land: Province[];
     pr: Province[];
@@ -276,70 +314,44 @@ class Country {
     }
 }
 
-// move types
-//  requires: each is unique
-let move = 0;
-let offSupport = 1;
-let hold = 2;
-let defSupport = 3;
-let unitConvoy = 4;
-let fleetConvoy = 5;
-
-class Order {
-    country: Country;
-    unit: Unit;
-    type: number;
-    origin: SubProvince;
-    dest: SubProvince;
+export class Order {
     strength: Number;
     successful: Boolean;
 
-    constructor (country: Country, unit: Unit, type: number, origin: SubProvince, dest: SubProvince) {
-        this.country = country;
-        this.unit = unit; // Unit -> unit carrying order
-        this.type = type; // Any -> move, offSupport, hold, defSupport, unitConvoy, fleetConvoy
-        this.origin = origin; // origin province of order
-        this.dest = dest; // Province -> destination for order
+    constructor (private _country: Country, private _unit: Unit, private _type: number, private _origin: SubProvince, private _dest: SubProvince) {
         this.strength = 1; // Int -> support in order 
         this.successful;
     }
     
-    getCountry() {
-        return this.country;
+    get country() {
+        return this._country;
     }
-    getUnit() {
-        return this.unit;
+    get unit() {
+        return this._unit;
     }
-    getType() {
-        return this.type;
+    get type() {
+        return this._type;
     }
-    getOrigin() {
-        return this.origin;
+    get origin() {
+        return this._origin;
     }
-    getDest() {
-        return this.dest;
+    get dest() {
+        return this._dest;
     }
     success(works: boolean) {
         this.successful = works;
     }
     cancelToHold() {
-        this.type = hold;
-        this.dest = null;
+        this._type = hold;
+        this._dest = null;
         this.success(false);
     }
 }
 
-class OrderResolver {
+export class OrderResolver {
 }
 
-// turn phases
-//  requires: each is unique
-let orders = 0;
-let resolution = 1;
-let retreat = 2;
-let build = 3;
-
-class Turn {
+export class Turn {
     season: string;
     year: number;
     phase: number;
@@ -363,7 +375,7 @@ class Turn {
     }
 
     clearOrdersByCountry(country: Country) { // Country -> void, mutates self
-        this.orders = this.orders.filter(order => order.getCountry() != country);
+        this.orders = this.orders.filter(order => order.country != country);
     }
 
     sortOrdersByType(types: number[]) { // [listof Any] -> void, mutates self (requires types in order of priority)
@@ -401,9 +413,9 @@ class Turn {
 
         for (var i = 0; i < this.orders.length; i++) {
             let order = this.orders[i];
-            if (order.getType() == move) {
-                order.getDest().getParent(provinces).addUnit(order.getUnit(), order.getDest());
-                order.getOrigin().getParent(provinces).removeUnit();
+            if (order.type == move) {
+                order.dest.getParent(provinces).addUnit(order.unit, order.dest);
+                order.origin.getParent(provinces).removeUnit();
             }
         }
         this.resetOrders();
@@ -411,7 +423,7 @@ class Turn {
 
 }
 
-class Game {
+export class Game {
     units: Unit[];
     provinces: Province[];
     countries: Country[];
@@ -490,7 +502,7 @@ class Game {
         }
         if (!origin) return `Origin Province Not Found: ${splitStr[1]}`;
         // no unit or origin unit type is consistent with string
-        if (!origin.getUnit() || origin.getUnit().getType() != unitType) return 'Unit Not Found';
+        if (!origin.getUnit() || origin.getUnit().type != unitType) return 'Unit Not Found';
         // GET ORDERTYPE (orderType)
         if (splitStr[2] && splitStr[2] == 'holds') var orderType = hold;
         else if (splitStr[2] && splitStr[2] == 'C') var orderType = fleetConvoy;
@@ -548,7 +560,7 @@ class Game {
             let unit = province.getNewestUnit();
             if (unit) {
                 let unitPosn = province.getUnitPosn();
-                ctx.drawImage(await Canvas.loadImage(unit.getImageDir()), unitPosn.x, unitPosn.y);
+                ctx.drawImage(await Canvas.loadImage(unit.imageDir), unitPosn.x, unitPosn.y);
             }
             provctx.drawImage(canvas, 0, 0);
         }
@@ -572,40 +584,4 @@ class Game {
     }
 }
 
-module.exports.classes = { 
-    dUnit: Unit,
-    dPosition: Position,
-    dSubProvince: SubProvince,
-    dProvince: Province,
-    dCountry: Country,
-    dOrder: Order,
-    dTurn: Turn,
-    dGame: Game
-}
-
-module.exports.unitTypes = {
-    army: army,
-    fleet: fleet
-}
-
-module.exports.orderTypes = {
-    move: move,
-    offSupport: offSupport,
-    hold: hold,
-    defSupport: defSupport,
-    unitConvoy: unitConvoy,
-    fleetConvoy: fleetConvoy
-}
-
-module.exports.provinceTypes = {
-    inland: inland,
-    water: water,
-    coastal: coastal
-}
-
-module.exports.turnPhases = {
-    order: orders,
-    resolution: resolution,
-    retreat: retreat,
-    build: build
 }

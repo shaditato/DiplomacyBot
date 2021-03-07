@@ -1,11 +1,8 @@
-require('dotenv').config({path: __dirname + '/.env'});
+require('dotenv').config();
 
-
-const Engine = require('./engine.js');
-const { dUnit, dPosition, dProvince, dOrder, dTurn, dGame } = Engine.classes;
+const { Engine } = require('./engine.js');
 const { unitTypes, orderTypes, provinceTypes, turnPhases } = Engine;
 const { Game1 } = require('./maps/standard/standard.js');
-const Canvas = require('canvas')
 
 const Discord = require('discord.js');
 const client = new Discord.Client();
