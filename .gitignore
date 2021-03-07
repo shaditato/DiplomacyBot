@@ -1,10 +1,5 @@
-.env
 node_modules/
-maps/standard/standard.js
-bundle.js
-classes.js
-classes.txt
-engine.js
-html.js
-index.html
-old.txt
+dip/engine.js
+dip/maps/standard/standard.js
+priv/
+.env

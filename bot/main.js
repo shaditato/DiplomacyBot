@@ -1,8 +1,8 @@
 require('dotenv').config();
 
-const { Engine } = require('./engine.js');
+const { Engine } = require('../dip/engine');
 const { unitTypes, orderTypes, provinceTypes, turnPhases } = Engine;
-const { Game1 } = require('./maps/standard/standard.js');
+const { Game1 } = require('../dip/maps/standard/standard');
 
 const Discord = require('discord.js');
 const client = new Discord.Client();

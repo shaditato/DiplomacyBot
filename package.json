@@ -2,12 +2,12 @@
   "name": "diplomacybot",
   "version": "1.0.0",
   "description": "discord bot to play diplomacy",
-  "main": "main.js",
+  "main": "./bot/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "echo no build script",
-    "html": "tsc ./maps/standard/standard.ts && browserify html.js -o bundle.js",
-    "tsc": "tsc engine.ts && tsc ./maps/standard/standard.ts"
+    "start": "node .",
+    "build": "tsc",
+    "html": "tsc ./maps/standard/standard.ts && browserify html.js -o bundle.js"
   },
   "author": "shad",
   "license": "MIT",

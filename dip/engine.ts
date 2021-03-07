@@ -577,7 +577,7 @@ export class Game {
             provctx.drawImage(provinceImg, provPosn.x, provPosn.y);
         }
         // === DRAW PROVINCE OUTLINES (labels + pr) ===
-        bgctx.drawImage(await Canvas.loadImage('./maps/standard/outline.png'), 0, 0);
+        bgctx.drawImage(await Canvas.loadImage('./dip/maps/standard/outline.png'), 0, 0);
         
         bgctx.drawImage(prov, 0, 0);
         return bg.toBuffer();

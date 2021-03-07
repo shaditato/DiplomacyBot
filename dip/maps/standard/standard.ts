@@ -4,7 +4,7 @@ const { unitTypes, orderTypes, provinceTypes, turnPhases } = Engine;
 const { Unit, SubProvince, Position, Province, Country, Game } = Engine;
 // const { unitTypes, orderTypes, provinceTypes, turnPhases } = Engine;
 
-const rootPath = 'maps/standard/';
+const rootPath = './dip/maps/standard/';
 const provincePath = `${rootPath}provinces/`;
 const unitPath = `${rootPath}units/`;
 
