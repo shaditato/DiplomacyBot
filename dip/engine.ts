@@ -1,58 +1,42 @@
 import Canvas from "canvas";
 
-export module Engine {
+// =================================================
+// === UNIT, PROVINCE, ORDER TYPES + TURN PHASES ===
+// =================================================
+// requires: each instance of a specific type has a unique & truthy value
 
-// unit types
-//  requires: each is a unique number
-const army = 0;
-const fleet = 1;
-export const unitTypes = {
-    army: army,
-    fleet: fleet
-}
-// province types
-//  requires: each is a unique number
-const inland = 0;
-const water = 1;
-const coastal = 2;
-export const provinceTypes = {
-    inland: inland,
-    water: water,
-    coastal: coastal
-}
-// move types
-//  requires: each is unique
-const move = 0;
-const offSupport = 1;
-const hold = 2;
-const defSupport = 3;
-const unitConvoy = 4;
-const fleetConvoy = 5;
-export const orderTypes = {
-    move: move,
-    offSupport: offSupport,
-    hold: hold,
-    defSupport: defSupport,
-    unitConvoy: unitConvoy,
-    fleetConvoy: fleetConvoy
-}
-// turn phases
-//  requires: each is unique
-const orders = 0;
-const resolution = 1;
-const retreat = 2;
-const build = 3;
-export const turnPhases = {
-    order: orders,
-    resolution: resolution,
-    retreat: retreat,
-    build: build   
-}
+type unitType = 'ARMY' | 'FLEET';
+type provinceType = 'INLAND' | 'WATER' | 'COASTAL';
+type orderType = 'MOVE' | 'OFFENSIVE_SUPPORT' | 'HOLD' | 'DEFENSIVE_SUPPORT' | 'UNIT_CONVOY' | 'FLEET_CONVOY';
+type turnPhase = 'ORDERS' | 'RESOLUTION' | 'RETREAT' | 'BUILD';
+
+export const army: unitType = 'ARMY';
+export const fleet: unitType = 'FLEET';
+
+export const inland: provinceType = 'INLAND';
+export const water: provinceType = 'WATER';
+export const coastal: provinceType = 'COASTAL';
+
+export const move: orderType = 'MOVE';
+export const offSupport: orderType = 'OFFENSIVE_SUPPORT';
+export const hold: orderType = 'HOLD';
+export const defSupport: orderType = 'DEFENSIVE_SUPPORT';
+export const unitConvoy: orderType = 'UNIT_CONVOY';
+export const fleetConvoy: orderType = 'FLEET_CONVOY';
+
+export const orders: turnPhase = 'ORDERS';
+export const resolution: turnPhase = 'RESOLUTION';
+export const retreat: turnPhase = 'RETREAT';
+export const build: turnPhase = 'BUILD';
+
+// =====================================
+// === GAME ENGINE CLASS DEFINITIONS ===
+// =====================================
 
 export class Unit {
     private _displaced: boolean = false;
     constructor (
-        private _type: number,
+        private _type: unitType,
         private _imageDir: string
     ) {}
 
@@ -96,13 +80,10 @@ export class Unit {
 }
 
 export class Position {
-    x: number;
-    y: number;
-
-    constructor (x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
+    constructor (
+        readonly x: number, 
+        readonly y: number
+    ) {}
 }
 
 export class SubProvince {
@@ -157,7 +138,7 @@ export class SubProvince {
 export class Province {
     constructor (
         private _name: [string, string], // first string must be three characters
-        private _type: number, 
+        private _type: provinceType, 
         private _pr: boolean, 
         private _subProvinces: SubProvince[],
         private _imageDir: string, 
@@ -189,7 +170,7 @@ export class Province {
     }
     get occupiedSubProvince() {
         if (!this._occupied) return null;
-        else return this._subProvinces.find(subProvince => subProvince.currentUnit)
+        else return this._subProvinces.find(subProvince => subProvince.currentUnit);
     }
     get unit() {
         if (!this._occupied) return null;
@@ -273,7 +254,7 @@ export class Order {
     constructor (
         private _country: Country, 
         private _unit: Unit, 
-        private _type: number, 
+        private _type: orderType, 
         private _origin: SubProvince, 
         private _dest: SubProvince
     ) {}
@@ -336,7 +317,7 @@ export class Turn { // to be deprecated and functionality given to Game and Orde
     clearOrdersByCountry(country: Country) { // Country -> void, mutates self
         this.orders = this.orders.filter(order => order.country != country);
     }
-    sortOrdersByType(types: number[]) { // [listof Any] -> void, mutates self (requires types in order of priority)
+    sortOrdersByType(types: orderType[]) { // [listof Any] -> void, mutates self (requires types in order of priority)
         let sorted2D = [];
         for (let i = 0; i < types.length; i++) {
             let type = types[i]
@@ -383,7 +364,7 @@ export class Game {
     constructor (
         private _countries: Country[], 
         private _seasons: string[], 
-        private _phases: number[], 
+        private _phases: turnPhase[], 
         private _dimensions: Position
     ) {
         this._units = this._countries.flatMap(country => country.units);
@@ -532,6 +513,4 @@ export class Game {
         
         return bg.toBuffer();
     }
-}
-
 }

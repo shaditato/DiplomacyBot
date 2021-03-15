@@ -1,7 +1,7 @@
 require('dotenv').config();
 
-const { Engine } = require('../dip/engine');
-const { unitTypes, orderTypes, provinceTypes, turnPhases } = Engine;
+const Engine = require('../dip/engine');
+const { orders } = Engine;
 const { Game1 } = require('../dip/maps/standard/standard');
 
 const Discord = require('discord.js');
@@ -51,7 +51,7 @@ client.on('message', async (m) => {
             reply('console logged Game1')
             break;
         case "start":
-            Game1.start(1901, turnPhases.order);
+            Game1.start(1901, orders);
             reply('game started');
             break;
         case "order":
