@@ -1,3 +1,5 @@
+import { strictEqual } from "node:assert";
+
 const Canvas = require('canvas');
 
 export module Engine {
@@ -49,8 +51,6 @@ export const turnPhases = {
     build: build   
 }
 
-
-
 export class Unit {
     private _displaced: boolean = false;
     constructor (
@@ -68,7 +68,7 @@ export class Unit {
         return this._displaced;
     }
     getCountry(countries: Country[]) {
-        for (var i = 0; i < countries.length; i++) {
+        for (let i = 0; i < countries.length; i++) {
             let country = countries[i];
             if (country.units.includes(this)) {
                 return country;
@@ -76,21 +76,21 @@ export class Unit {
         }
     }
     getSubProvince(provinces: Province[]) {
-        for (var i = 0; i < provinces.length; i++) {
+        for (let i = 0; i < provinces.length; i++) {
             let province = provinces[i];
-            if (province.getUnit() == this) {
-                let subProvinces = province.getSubProvinces()
-                for (var i = 0; i < subProvinces.length; i++) {
-                    let subProvinceUnit = subProvinces[i].getUnit();
+            if (province.unit == this) {
+                let subProvinces = province.subProvinces;
+                for (let i = 0; i < subProvinces.length; i++) {
+                    let subProvinceUnit = subProvinces[i].currentUnit;
                     if (subProvinceUnit) return subProvinceUnit;
                 }
             }
         }
     }
     getProvince(provinces: Province[]) {
-        for (var i = 0; i < provinces.length; i++) {
+        for (let i = 0; i < provinces.length; i++) {
             let province = provinces[i];
-            if (province.getUnit() == this) {
+            if (province.unit == this) {
                 return province;
             }
         }
@@ -108,220 +108,177 @@ export class Position {
 }
 
 export class SubProvince {
-    name: string;
-    occupiedBy: Unit;
-    newUnit: Unit;
-    displacedUnit: Unit;
-    adjacentTo: SubProvince[];
-
-    constructor(name: string, occupier: Unit) {
-        this.name = name;
-        this.occupiedBy = occupier;
-        this.newUnit;
-        this.displacedUnit;
-        this.adjacentTo;
+    private _newUnit: Unit;
+    private _displacedUnit: Unit;
+    private _adjacents: SubProvince[];
+    constructor(
+        private _name: string, 
+        private _currentUnit: Unit
+    ) {}
+    get name() {
+        return this._name;
     }
-
-    getName() {
-        return this.name;
+    get currentUnit() {
+        return this._currentUnit;
     }
-    getUnit() {
-        return this.occupiedBy;
+    get occupied() {
+        return !!this._currentUnit;
     }
-    getNewUnit() {
-        return this.newUnit;
+    get newUnit() {
+        return this._newUnit;
     }
-    getAdjacent() {
-        return this.adjacentTo;
+    get displacedUnit() {
+        return this._displacedUnit;
+    }
+    get adjacents() {
+        return this._adjacents;
     }
     addUnit(unit: Unit) {
-        this.newUnit = unit;
+        this._newUnit = unit;
+    }
+    setAdjacent(adjacents: SubProvince[]) {
+        this._adjacents = adjacents;
     }
     removeUnit() {
-        this.occupiedBy = null;
+        this._currentUnit = null;
     }
     updateUnit() {
-        if (this.occupiedBy && this.newUnit) {
-            this.displacedUnit = this.occupiedBy;
+        if (this._currentUnit && this._newUnit) {
+            this._displacedUnit = this._currentUnit;
         }
-        if (this.newUnit) {
-            this.occupiedBy = this.newUnit;
-            this.newUnit = null;
+        if (this._newUnit) {
+            this._currentUnit = this.newUnit;
+            this._newUnit = null;
         }
-    }
-    setAdjacent(adjacent: SubProvince[]) {
-        this.adjacentTo = adjacent;
     }
     getParent(provinces: Province[]) {
-        for (var i = 0; i < provinces.length; i++) {
-            let province = provinces[i];
-            if (province.getSubProvinces().includes(this)) return province;
-        }
+        return provinces.find(province => province.subProvinces.includes(this));
     }
 }
 
 export class Province {
-    name: [string, string];
-    type: number;
-    pr: boolean;
-    subProvinces: SubProvince[];
-    occupied: boolean;
-    imageDir: string;
-    provPosn: Position;
-    unitPosn: Position;
+    constructor (
+        private _name: [string, string], // first string must be three characters
+        private _type: number, 
+        private _pr: boolean, 
+        private _subProvinces: SubProvince[],
+        private _imageDir: string, 
+        private _provPosn: Position, 
+        private _unitPosn: Position, 
+        private _occupied: boolean
+    ) {}
 
-    constructor (name: [string, string], type: number, prBool: boolean, subProvinces: SubProvince[],
-                imageDir: string, provPosn: Position, unitPosn: Position, occupied: boolean) {
-        this.name = name; // [abbreviated, full]
-        this.type = type; // Any -> inland, water, coastal
-        this.pr = prBool; // Bool -> province is PR
-        this.subProvinces = subProvinces; // note: all subprovinces.getName() include this.name
-        this.occupied = occupied; // Unit -> current occupied
-        this.imageDir = imageDir; // directory of image
-        this.provPosn = provPosn; // { x: int, y: int } -> draw prov x y
-        this.unitPosn = unitPosn; // { x: int, y: int } -> draw unit x y
+    get name() {
+        return this._name;
     }
-
-    getName() {
-        return this.name;
+    get type() {
+        return this._type;
     }
-    getUnit() {
-        if (!this.occupied) return null;
-        else {
-            for (var i = 0; i < this.subProvinces.length; i++) {
-                let unit = this.subProvinces[i].getUnit();
-                if (unit) return unit;
-            }
-        }
+    get occupied() {
+        return this._occupied;
     }
-    getCountry(countries: Country[]) { // returns current owner
-        for (var i = 0; i < countries.length; i++) {
-            let country = countries[i];
-            if (country.getLand().includes(this)) return country;
-        }
+    get pr() {
+        return this._pr;
+    }
+    get provPosn() {
+        return this._provPosn;
+    }
+    get unitPosn() {
+        return this._unitPosn;
+    }
+    get subProvinces() {
+        return this._subProvinces;
+    }
+    get occupiedSubProvince() {
+        if (!this._occupied) return null;
+        else return this._subProvinces.find(subProvince => subProvince.currentUnit)
+    }
+    get unit() {
+        if (!this._occupied) return null;
+        else return this.occupiedSubProvince.currentUnit;
+    }
+    get imageDir() {
+        return this._imageDir;
+    }
+    get newestUnit() {
+        const { newUnit } = this._subProvinces.find(subProvince => subProvince.newUnit) || {};
+        if (newUnit) return newUnit;
+        const { currentUnit } = this._subProvinces.find(subProvince => subProvince.currentUnit) || {};
+        if (currentUnit) return currentUnit;
         return null;
     }
-    getProvPosn() {
-        return this.provPosn;
-    }
-    getUnitPosn() {
-        return this.unitPosn;
-    }
-    getNewestUnit() {
-        for (var i = 0; i < this.subProvinces.length; i++) {
-            let unit = this.subProvinces[i].getNewUnit();
-            if (unit) return unit;
-        }
-        for (var i = 0; i < this.subProvinces.length; i++) {
-            let unit = this.subProvinces[i].getUnit();
-            if (unit) return unit;
-        }
-    }
-    getSubProvinces() {
-        return this.subProvinces;
-    }
-    getOccupiedSubProvince() {
-        if (!this.occupied) return null;
-        else {
-            for (var i = 0; i < this.subProvinces.length; i++) {
-                let subProvince = this.subProvinces[i]
-                if (subProvince.getUnit()) return subProvince;
-            }
-        }
-    }
-    getImageDir() {
-        return this.imageDir;
-    }
-    removeUnit() {
-        if (!this.occupied) return;
-        else {
-            for (var i = 0; i < this.subProvinces.length; i++) {
-                let unit = this.subProvinces[i].getUnit();
-                if (unit) {
-                    this.subProvinces[i].removeUnit();
-                    break;
-                }
-            }
-            this.occupied = false;
-        }
-    }
-    occupy() {
-        this.occupied = true;
+    getCountry(countries: Country[]) { // returns current owner
+        const country = countries.find(country => country.provinces.includes(this));
+        if (country) return country;
+        else return null;
     }
     addUnit(unit: Unit, subProvince: SubProvince) {
-        for (var i = 0; i < this.subProvinces.length; i++) {
-            let subProvince_i = this.subProvinces[i]
-            if (subProvince_i == subProvince) {
-                subProvince_i.addUnit(unit);
-                this.occupy();
-            }
+        if (!this._subProvinces.includes(subProvince)) return;
+        else {
+            subProvince.addUnit(unit);
+            this._occupied = true;
         }
     } 
-    isOccupied() {
-        return this.occupied;
-    }
-    isPR() {
-        return this.pr;
+    removeUnit() {
+        if (!this._occupied) return;
+        else {
+            this.occupiedSubProvince.removeUnit();
+            this._occupied = false;
+        }
     }
     isAttacked(orders: Order[], countries: Country[]) { // [listof Order] -> Bool
-        for (var i = 0; i < orders.length; i++) {
-            let order = orders[i];
-            if (this.getSubProvinces().includes(order.dest) && order.type == move // destination and attack
-                && (!this.isOccupied() || order.country != this.getUnit().getCountry(countries))) { // not same country
-                return true;
-            }
-        }
-        return false;
+        return !!(orders.find(order => { 
+            this.subProvinces.includes(order.dest) 
+            && order.type == move // destination and attack
+            && (!this.occupied || order.country != this.unit.getCountry(countries))
+        }))
     }
-
 }
 
 export class Country {
-    name: string;
-    land: Province[];
-    pr: Province[];
-    home: Province[];
-    colour: string; // hex colour
-    units: Unit[];
-
-    constructor (name: string, land: Province[], units: Unit[], colour: string) {
-        this.name = name; // Str -> name of country
-        this.land = land; // [listof Province] -> country total pr owned
-        this.home = land.filter(province => province.isPR()); // [listof Province] -> country home pr
-        this.colour = colour; // HEX -> country colour
-        this.units = units;
+    private _home: Province[];
+    constructor (
+        private _name: string, 
+        private _provinces: Province[], 
+        private _colour: string
+    ) {
+        this._home = this._provinces.filter(province => province.pr); // all starting land that are pr
     }
 
-    getName() {
-        return this.name;
+    get name() {
+        return this._name;
     }
-    getLand() {
-        return this.land;
+    get provinces() {
+        return this._provinces;
     }
-    getPR() {
-        return this.land.filter(province => province.isPR());
+    get home() {
+        return this._home;
     }
-    getColour() {
-        return this.colour;
+    get pr() {
+        return this._provinces.filter(province => province.pr);
     }
-
+    get units() {
+        return this._provinces.map(province => province.unit).filter(unit => unit);
+    }
+    get colour() {
+        return this._colour;
+    }
     hasUnit(unit: Unit) { // Unit -> Bool
-        if (this.units.includes(unit)) {
-            return true;
-        } else {
-            return false;
-        }
+        return this.units.includes(unit);
     }
+    
 }
 
 export class Order {
-    strength: Number;
-    successful: Boolean;
-
-    constructor (private _country: Country, private _unit: Unit, private _type: number, private _origin: SubProvince, private _dest: SubProvince) {
-        this.strength = 1; // Int -> support in order 
-        this.successful;
-    }
+    private _strength: Number = 1;
+    private _successful: Boolean;
+    constructor (
+        private _country: Country, 
+        private _unit: Unit, 
+        private _type: number, 
+        private _origin: SubProvince, 
+        private _dest: SubProvince
+    ) {}
     
     get country() {
         return this._country;
@@ -338,26 +295,30 @@ export class Order {
     get dest() {
         return this._dest;
     }
-    success(works: boolean) {
-        this.successful = works;
+    get strength() {
+        return this._strength;
+    }
+    get successful() {
+        return this._successful;
+    }
+    setSuccess(status: boolean) {
+        this._successful = status;
     }
     cancelToHold() {
         this._type = hold;
         this._dest = null;
-        this.success(false);
+        this.setSuccess(false);
     }
 }
 
-export class OrderResolver {
-}
+export class OrderResolver {}; 
 
-export class Turn {
+export class Turn { // to be deprecated and functionality given to Game and OrderResolver classes 
     season: string;
     year: number;
     phase: number;
     orders: Order[];
     resolvedOrders: Order[];
-
     constructor (season: string, year: number, phase: number) {
         this.season = season;
         this.year = year;
@@ -365,53 +326,46 @@ export class Turn {
         this.orders = []; // [listof Orders] or null
         this.resolvedOrders = [];
     }
-
+    get name() {
+        return `${this.season} ${this.year}`
+    }
     resetOrders() { // void -> void, mutates self
         this.orders = [];
     }
-
     addOrders(newOrders: Order[]) { // [listof Order] -> void, mutates self
         this.orders = this.orders.filter(order => order != null).concat(newOrders);
     }
-
     clearOrdersByCountry(country: Country) { // Country -> void, mutates self
         this.orders = this.orders.filter(order => order.country != country);
     }
-
     sortOrdersByType(types: number[]) { // [listof Any] -> void, mutates self (requires types in order of priority)
         let sorted2D = [];
-        for (var i = 0; i < types.length; i++) {
+        for (let i = 0; i < types.length; i++) {
             let type = types[i]
             sorted2D.push(this.orders.filter(order => order.type == type));
         }
-
         let sortedOrders = []; 
-        for (var i = 0; i < sorted2D.length; i++) {
+        for (let i = 0; i < sorted2D.length; i++) {
             sortedOrders = sortedOrders.concat(sorted2D[i]);
         }
-
         this.orders = sortedOrders;
     }
-
     sortOrdersByCountry(countries: Country[]) { // [listof Country] -> void, mutates self
         let sorted2D = [];
-        for (var i = 0; i < countries.length; i++) {
+        for (let i = 0; i < countries.length; i++) {
             let country = countries[i]
             sorted2D.push(this.orders.filter(order => order.country == country));
         }
-
         let sortedOrders = []; 
-        for (var i = 0; i < sorted2D.length; i++) {
+        for (let i = 0; i < sorted2D.length; i++) {
             sortedOrders = sortedOrders.concat(sorted2D[i]);
         }
-        
         this.orders = sortedOrders;
     }
-
     resolveOrders(provinces: Province[]) { // void -> void, self-mutates (requires orders sorted by type in correct priority)
         // priority: <offSupport, defSupport>, <move>, <fleetConvoy, unitConvoy, hold>
 
-        for (var i = 0; i < this.orders.length; i++) {
+        for (let i = 0; i < this.orders.length; i++) {
             let order = this.orders[i];
             if (order.type == move) {
                 order.dest.getParent(provinces).addUnit(order.unit, order.dest);
@@ -420,45 +374,54 @@ export class Turn {
         }
         this.resetOrders();
     }
-
 }
 
 export class Game {
-    units: Unit[];
-    provinces: Province[];
-    countries: Country[];
-    seasons: string[];
-    phases: number[];
-    turn: Turn;
-    dimensions: Position;
 
-    constructor (allUnits: Unit[], allProvinces: Province[], allCountries: Country[], seasons: string[], phases: number[], dim: Position) {
-        this.units = allUnits; // [listof Unit]
-        this.provinces = allProvinces; // [listof Province]
-        this.countries = allCountries; // [listof Country]
-        this.seasons = seasons; // [listof Str] -> turns per year, requires: non-empty
-        this.phases = phases; // [listof Any] -> orders, resolution, retreat, build
-        this.turn; // Turn or null
-        this.dimensions = dim;
+    private _units: Unit[];
+    private _provinces: Province[];
+    private _turn: Turn;
+
+    constructor (
+        private _countries: Country[], 
+        private _seasons: string[], 
+        private _phases: number[], 
+        private _dimensions: Position
+    ) {
+        this._units = this._countries.flatMap(country => country.units);
+        this._provinces = this._countries.flatMap(country => country.provinces);
     }
 
-    getProvinces() {
-        return this.provinces;
+    get units() {
+        return this._units;
     }
-    getCountries() {
-        return this.countries;
+    get provinces() {
+        return this._provinces;
     }
-    getCountryByName(str) {
-        let country = this.countries.filter(country => country.getName().toLowerCase() == str.toLowerCase())[0]
-        if (!country) return null;
-        else return country;
+    get subProvinces() {
+        return this._provinces.flatMap(province => province.subProvinces);
     }
-    getTime() {
-        return `${this.turn.season} ${this.turn.year}`
+    get countries() {
+        return this._countries;
+    }
+    get seasons() {
+        return this._seasons;
+    }
+    get phases() {
+        return this._phases;
+    }
+    get turn() {
+        return this._turn;
+    }
+    get dimensions() {
+        return this._dimensions;
+    }
+    getCountryByName(str: string) {
+        return this._countries.find(country => country.name.toLowerCase() == str.toLowerCase());
     }
     // start the game
     start(firstYear: number, firstPhase: number) { // Int -> void, mutates self
-        this.turn = new Turn(this.seasons[0], firstYear, firstPhase)
+        this._turn = new Turn(this.seasons[0], firstYear, firstPhase)
     }
     // go to the next turn
     nextTurn() {
@@ -471,115 +434,125 @@ export class Game {
             this.turn.season = this.seasons[currentSeasonIndex + 1];
         }
         this.turn.resolveOrders(this.provinces);
-        for (var i = 0; i < this.provinces.length; i++) {
-            for (var z = 0; z < this.provinces[i].subProvinces.length; z++) {
+        for (let i = 0; i < this.provinces.length; i++) {
+            for (let z = 0; z < this.provinces[i].subProvinces.length; z++) {
                 this.provinces[i].subProvinces[z].updateUnit();
             }
         }
     }
     makeOrderFromString(str: string) { // returns string if error, else returns Order
+        const [strUnitType, strOriginProvince, strOrderType, strDestProvince] = str.toLowerCase().split(/ +/);
         let splitStr = str.toLowerCase().split(/ +/);
+
         // GET UNIT TYPE (unitType)
-        let strUnitType = splitStr[0]
-        if (strUnitType == 'a') var unitType = army;
-        else if (strUnitType == 'f') var unitType = fleet;
-        else return `Invalid Unit Type: ${splitStr[0]}`;
+        const unitType = strUnitType.startsWith('a') ? army : (strUnitType.startsWith('f') ? fleet : undefined);
+        if (unitType === undefined) return `Invalid Unit Type '${strUnitType.toUpperCase()}'`;
+
         // GET ORIGIN SUBPROVINCE (origin)
-        if (!splitStr[1]) return 'No Origin Province Specified';
-        var origin: SubProvince;
-        let provinces = this.getProvinces()
-        for (var i = 0; i < provinces.length; i++) {
-            let province = provinces[i];
-            let provinceName = province.getName()[0].toLowerCase()
-            let strOrigin = splitStr[1].slice(0, provinceName.length);
-            if (strOrigin.includes(provinceName)) {
-                let occSubProvince = province.getOccupiedSubProvince();
-                if (occSubProvince.getName().toLowerCase() == strOrigin) { 
-                    origin = occSubProvince;
-                    break;
-                }
-            }
+        if (!strOriginProvince) return 'No Origin Province Specified';
+        let origin = this.subProvinces.find(subProvince => (subProvince.name.toLowerCase() == strOriginProvince) && (subProvince.occupied));
+        if (!origin) {
+            origin = this.subProvinces.find(subProvince => subProvince.getParent(this._provinces).name[1].toLowerCase().startsWith(strOriginProvince) && subProvince.occupied);
         }
-        if (!origin) return `Origin Province Not Found: ${splitStr[1]}`;
-        // no unit or origin unit type is consistent with string
-        if (!origin.getUnit() || origin.getUnit().type != unitType) return 'Unit Not Found';
+        /* const strEq = (str1: string, str2: string) => str1 == str2;
+        const strSw = (str1: string, str2: string) => str1.startsWith(str2);
+        type comparefunction = (str1: string, str2: string) => boolean;
+        const findProvinceByName = (index: number, name: string, f: comparefunction) => this._provinces.find(province => f(province.name[index].toLowerCase(), name));
+        let { occupiedSubProvince } /* abbrev, equal  = findProvinceByName(0, strOriginProvince, strEq) || {};
+        if (!occupiedSubProvince) /* full name, equal  ( { occupiedSubProvince } = findProvinceByName(1, strOriginProvince, strEq) || {} );
+        if (!occupiedSubProvince) /* abbrev, startsWith  ( { occupiedSubProvince } = findProvinceByName(1, strOriginProvince, strSw) || {} );
+        const origin = occupiedSubProvince; */
+        if (!origin) return `Origin Province '${strOriginProvince.toUpperCase()}' Not Found`;
+        if (!origin.currentUnit || origin.currentUnit.type != unitType) return 'Unit Not Found';
+
         // GET ORDERTYPE (orderType)
-        if (splitStr[2] && splitStr[2] == 'holds') var orderType = hold;
-        else if (splitStr[2] && splitStr[2] == 'C') var orderType = fleetConvoy;
-        else if (splitStr[1].slice(3).startsWith('-')) var orderType = move;
-        else return 'Order Type Could Not Be Determined';
+        if (!strOrderType) return 'No Order Type Specified';
+        let orderType;
+        if (strOrderType.startsWith('h')) orderType = hold;
+        else if (strOrderType.startsWith('c')) orderType = fleetConvoy;
+        else orderType = move;
+
         // GET DESTINATION SUBPROVINCE
-        var dest: SubProvince;
-        let strDest = splitStr[1].slice(origin.getName().length+1);
+        let dest: SubProvince;
+        let strDest = splitStr[1].slice(origin.name.length+1);
         if (orderType == move) {
-            for (var i = 0; i < provinces.length; i++) {
-                let province = provinces[i];
-                if (strDest.includes(province.getName()[0].toLowerCase())) {
-                    dest = province.getSubProvinces().filter(subProvince => (origin.getAdjacent().includes(subProvince) && (subProvince.getName().toLowerCase() == strDest)))[0]
+            if (!strDestProvince) return 'No Destination Province Specified';
+            /* let destProvince = findProvinceByName(0, strDestProvince, strEq);
+            if (!destProvince) destProvince = findProvinceByName(1, strDestProvince, strEq);
+            if (!destProvince) destProvince = findProvinceByName(0, strDestProvince, strSw);
+            if (!destProvince) return `Destination Province '${strDestProvince.toUpperCase()}' Not Found`;
+            let adjacents = destProvince.subProvinces.filter(subProvince => subProvince.adjacents.includes(origin));
+            if (adjacents.length != 1) */
+            for (let i = 0; i < this._provinces.length; i++) {
+                let province = this._provinces[i];
+                if (strDest.includes(province.name[0].toLowerCase())) {
+                    dest = province.subProvinces.filter(subProvince => (origin.adjacents.includes(subProvince) && (subProvince.name.toLowerCase() == strDest)))[0]
                     break;
                 }
             }
         }
         if (!dest) return 'Destination Province Not Found';
 
-        return new Order(origin.getUnit().getCountry(this.getCountries()), origin.getUnit(), orderType, origin, dest);
+        return new Order(origin.currentUnit.getCountry(this._countries), origin.currentUnit, orderType, origin, dest);
     }
     async drawCanvas() {
         // === DRAW BACKGROUND (water) ===
-        let bg = Canvas.createCanvas(this.dimensions.x, this.dimensions.y);
-        let bgctx = bg.getContext('2d');
+        const bg = Canvas.createCanvas(this.dimensions.x, this.dimensions.y);
+        const bgctx = bg.getContext('2d');
         // water
-        let backgroundGradient = bgctx.createLinearGradient(0, this.dimensions.y, 0, 0);
+        const backgroundGradient = bgctx.createLinearGradient(0, this.dimensions.y, 0, 0);
         backgroundGradient.addColorStop(0, '#7F92FF');
         backgroundGradient.addColorStop(1, '#7FC8FF');
         bgctx.fillStyle = backgroundGradient;
         bgctx.fillRect(0, 0, bg.width, bg.height);
+
         // === DRAW PROVINCES + UNITS ===
-        let prov = Canvas.createCanvas(this.dimensions.x, this.dimensions.y);
-        let provctx = prov.getContext('2d');
-        // let canvas = <HTMLCanvasElement> document.getElementById('liveCanvas'); // html
-        for (var i = 0; i < this.provinces.length; i++) {
-            let canvas = Canvas.createCanvas(this.dimensions.x, this.dimensions.y);
-            let ctx = canvas.getContext('2d');
-            let province = this.provinces[i];
-            let provinceCountry = province.getCountry(this.countries);
-            let provinceImg = await Canvas.loadImage(province.getImageDir());
-            let provPosn = province.getProvPosn();
-            let colour = provinceCountry ? provinceCountry.getColour() : 'white';
-            // draw colour rect
-            ctx.fillStyle = colour;
+        const prov = Canvas.createCanvas(this.dimensions.x, this.dimensions.y);
+        const provctx = prov.getContext('2d');
+        // const canvas = <HTMLCanvasElement> document.getElementById('liveCanvas'); // html
+        for (let i = 0; i < this.provinces.length; i++) {
+            const canvas = Canvas.createCanvas(this.dimensions.x, this.dimensions.y);
+            const ctx = canvas.getContext('2d');
+            const province = this.provinces[i];
+            const provinceCountry = province.getCountry(this.countries);
+            const provinceImg = await Canvas.loadImage(province.imageDir);
+            const { provPosn } = province;
+            // draw colour rect for province
+            ctx.fillStyle = provinceCountry ? provinceCountry.colour : 'white';
             ctx.globalCompositeOperation = 'destination-over';
             ctx.fillRect(provPosn.x, provPosn.y, provinceImg.width, provinceImg.height);
             // draw province img
             ctx.globalCompositeOperation = 'destination-in';
             ctx.drawImage(provinceImg, provPosn.x, provPosn.y);
-            // draw unit img w/ shadow
+            // unit shadow
             ctx.globalCompositeOperation = 'source-over';
             ctx.shadowColor = 'black';
             ctx.shadowBlur = 2;
-            let unit = province.getNewestUnit();
-            if (unit) {
-                let unitPosn = province.getUnitPosn();
-                ctx.drawImage(await Canvas.loadImage(unit.imageDir), unitPosn.x, unitPosn.y);
+            // draw unit img
+            const { newestUnit } = province;
+            if (newestUnit) {
+                const { unitPosn } = province;
+                ctx.drawImage(await Canvas.loadImage(newestUnit.imageDir), unitPosn.x, unitPosn.y);
             }
             provctx.drawImage(canvas, 0, 0);
         }
+
         // === DRAW PROVINCE GLOW ===
         provctx.globalCompositeOperation = 'destination-over';
         provctx.shadowBlur = 30;
-        for (var i = 0; i < this.provinces.length; i++) {
-            let province = this.provinces[i];
-            let provinceCountry = province.getCountry(this.countries);
-            let provinceImg = await Canvas.loadImage(province.getImageDir());
-            let provPosn = province.getProvPosn();
-            let colour = provinceCountry ? provinceCountry.getColour() : 'white';
-            provctx.shadowColor = colour;
+        for (let i = 0; i < this.provinces.length; i++) {
+            const province = this.provinces[i];
+            const provinceCountry = province.getCountry(this.countries);
+            const provinceImg = await Canvas.loadImage(province.imageDir);
+            provctx.shadowColor = provinceCountry ? provinceCountry.colour : 'white';
+            const { provPosn } = province
             provctx.drawImage(provinceImg, provPosn.x, provPosn.y);
         }
-        // === DRAW PROVINCE OUTLINES (labels + pr) ===
-        bgctx.drawImage(await Canvas.loadImage('./dip/maps/standard/outline.png'), 0, 0);
         
+        // === DRAW PROVINCE OUTLINES (labels + pr) + PROVINCES TO BACKGROUND ===
+        bgctx.drawImage(await Canvas.loadImage('./dip/maps/standard/outline.png'), 0, 0);
         bgctx.drawImage(prov, 0, 0);
+        
         return bg.toBuffer();
     }
 }

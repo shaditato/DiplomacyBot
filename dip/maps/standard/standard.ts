@@ -97,28 +97,11 @@ const provinces = {
     // "Other": [Syr, Arm, Ukr, Lvn, Fin]
 }
 
-let getUnits = function(provinces: InstanceType<typeof Province>[]) {
-    let collected = [];
-    for (var i = 0; i < provinces.length; i++) {
-        collected.push(provinces[i].getUnit());
-    }
-    return collected;
-}
-
-let Turkey = new Country('Turkey', provinces["Turkey"], getUnits(provinces["Turkey"]), '#FFDA7F');
-let Russia = new Country('Russia', provinces["Russia"], getUnits(provinces["Russia"]), '#E4E4E4');
+let Turkey = new Country('Turkey', provinces["Turkey"], '#FFDA7F');
+let Russia = new Country('Russia', provinces["Russia"], '#E4E4E4');
 
 const countries = [Turkey, Russia]
 
-const allProvinces = () => {
-    let collected = [];
-    let provincesArray = Object.values(provinces);
-    for (var i = 0; i < provincesArray.length; i++) {
-        collected = collected.concat(provincesArray[i]);
-    }
-    return collected;
-}
-
-let Game1 = new Game(getUnits(allProvinces()), allProvinces(), countries, ['Spring', 'Fall'], Object.values(turnPhases), new Position(915, 767));
+let Game1 = new Game(countries, ['Spring', 'Fall'], Object.values(turnPhases), new Position(915, 767));
 
 module.exports.Game1 = Game1;

@@ -69,7 +69,7 @@ client.on('message', async (m) => {
             reply('ok i tried');
             break;
         case "map":
-            reply(Game1.getTime(), [await Game1.drawCanvas()]);
+            reply(Game1.turn.name, [await Game1.drawCanvas()]);
             break;
         case "eval":
             if (fromOwner()){
