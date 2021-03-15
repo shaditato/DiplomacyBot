@@ -1,6 +1,4 @@
-import { strictEqual } from "node:assert";
-
-const Canvas = require('canvas');
+import Canvas from "canvas";
 
 export module Engine {
 
@@ -454,16 +452,8 @@ export class Game {
         if (!origin) {
             origin = this.subProvinces.find(subProvince => subProvince.getParent(this._provinces).name[1].toLowerCase().startsWith(strOriginProvince) && subProvince.occupied);
         }
-        /* const strEq = (str1: string, str2: string) => str1 == str2;
-        const strSw = (str1: string, str2: string) => str1.startsWith(str2);
-        type comparefunction = (str1: string, str2: string) => boolean;
-        const findProvinceByName = (index: number, name: string, f: comparefunction) => this._provinces.find(province => f(province.name[index].toLowerCase(), name));
-        let { occupiedSubProvince } /* abbrev, equal  = findProvinceByName(0, strOriginProvince, strEq) || {};
-        if (!occupiedSubProvince) /* full name, equal  ( { occupiedSubProvince } = findProvinceByName(1, strOriginProvince, strEq) || {} );
-        if (!occupiedSubProvince) /* abbrev, startsWith  ( { occupiedSubProvince } = findProvinceByName(1, strOriginProvince, strSw) || {} );
-        const origin = occupiedSubProvince; */
         if (!origin) return `Origin Province '${strOriginProvince.toUpperCase()}' Not Found`;
-        if (!origin.currentUnit || origin.currentUnit.type != unitType) return 'Unit Not Found';
+        if (origin.currentUnit.type != unitType) return 'Unit Not Found';
 
         // GET ORDERTYPE (orderType)
         if (!strOrderType) return 'No Order Type Specified';
@@ -474,24 +464,11 @@ export class Game {
 
         // GET DESTINATION SUBPROVINCE
         let dest: SubProvince;
-        let strDest = splitStr[1].slice(origin.name.length+1);
         if (orderType == move) {
             if (!strDestProvince) return 'No Destination Province Specified';
-            /* let destProvince = findProvinceByName(0, strDestProvince, strEq);
-            if (!destProvince) destProvince = findProvinceByName(1, strDestProvince, strEq);
-            if (!destProvince) destProvince = findProvinceByName(0, strDestProvince, strSw);
-            if (!destProvince) return `Destination Province '${strDestProvince.toUpperCase()}' Not Found`;
-            let adjacents = destProvince.subProvinces.filter(subProvince => subProvince.adjacents.includes(origin));
-            if (adjacents.length != 1) */
-            for (let i = 0; i < this._provinces.length; i++) {
-                let province = this._provinces[i];
-                if (strDest.includes(province.name[0].toLowerCase())) {
-                    dest = province.subProvinces.filter(subProvince => (origin.adjacents.includes(subProvince) && (subProvince.name.toLowerCase() == strDest)))[0]
-                    break;
-                }
-            }
+            dest = origin.adjacents.find(subProvince => (subProvince.name.toLowerCase() == strDestProvince) || subProvince.getParent(this._provinces).name[1].toLowerCase().startsWith(strDestProvince));
+            if (!dest) return 'Destination Province Not Found';
         }
-        if (!dest) return 'Destination Province Not Found';
 
         return new Order(origin.currentUnit.getCountry(this._countries), origin.currentUnit, orderType, origin, dest);
     }

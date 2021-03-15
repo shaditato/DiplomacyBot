@@ -61,7 +61,7 @@ client.on('message', async (m) => {
             else {
                 Game1.turn.addOrders(order);
                 console.log(order);
-                reply('console logged order');
+                reply(`${order.unit.type} ${order.origin.name} ${order.type} ${order.dest.name}`);
             }
             break;
         case "next":
