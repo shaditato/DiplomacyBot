@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node .",
-    "build": "tsc",
+    "install": "tsc",
     "html": "tsc ./maps/standard/standard.ts && browserify html.js -o bundle.js"
   },
   "author": "shad",
